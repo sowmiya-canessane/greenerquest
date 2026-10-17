@@ -22,7 +22,7 @@ const questionnaires = {
           { id: 'home_solar', type: 'single', label: 'Does your home use solar energy?', options: ['Yes', 'No', 'Not sure'] },
           { id: 'home_electricity', type: 'single', label: 'Do you know your home’s monthly electricity use?', options: ['Yes, below 100 kWh', '100–300 kWh', '301–500 kWh', 'More than 500 kWh', 'I do not know'] },
           { id: 'school_monthly_kwh', type: 'number', label: 'If available, about how many kWh does your household use in a month?', help: 'An electricity bill may show this. Skip if you are not sure.', unit: 'kWh / month', step: '1', max: '100000' },
-          { id: 'school_household_size', type: 'number', label: 'How many people share that household electricity use?', help: 'Used to estimate your share of the household total.', unit: 'people', step: '1', max: '100' }
+          { id: 'school_household_size', type: 'number', label: 'How many people share that household electricity use?', help: 'Used to estimate your share of the household total.', unit: 'people', step: '1', max: '10' }
         ]
       },
       {
@@ -76,7 +76,7 @@ const questionnaires = {
           { id: 'computer_hours', type: 'number', label: 'About how many hours a day do you use a laptop or desktop?', unit: 'hours / day', step: '0.5', max: '24' },
           { id: 'phone_hours', type: 'number', label: 'About how many hours a day do you use a smartphone?', unit: 'hours / day', step: '0.5', max: '24' },
           { id: 'college_solar', type: 'single', label: 'Does your residence use electricity from solar panels?', options: ['Yes', 'No', 'Not sure'] },
-          { id: 'bill_sharers', type: 'number', label: 'If you share an electricity bill, how many people share it?', unit: 'people', step: '1', max: '100' }
+          { id: 'bill_sharers', type: 'number', label: 'If you share an electricity bill, how many people share it?', unit: 'people', step: '1', max: '10' }
         ]
       },
       {
