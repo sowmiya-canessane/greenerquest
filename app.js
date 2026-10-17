@@ -331,10 +331,15 @@ function showSectionCelebration(score) {
     document.body.append(popup);
   }
 
+  const tier = ['Platinum', 'Gold', 'Silver', 'Bronze'].includes(score.tier) ? score.tier.toLowerCase() : '';
+  popup.className = `section-celebration${tier ? ` has-tier tier-${tier}` : ''}`;
   const reward = score.badgeEarned
     ? `${score.badge} badge unlocked!`
     : `${score.answered} of ${score.total} answers counted`;
-  popup.innerHTML = `<div class="celebration-card"><div class="leaf-burst" aria-hidden="true"><span class="celebration-leaf leaf-one"></span><span class="celebration-leaf leaf-two"></span><span class="celebration-leaf leaf-three"></span><span class="celebration-leaf leaf-four"></span><span class="celebration-leaf leaf-five"></span><span class="celebration-leaf leaf-six"></span></div><span class="celebration-overline">SECTION COMPLETE</span><strong class="celebration-title">${escapeHtml(score.title)}</strong><span class="celebration-reward">+${score.points} XP <i aria-hidden="true">·</i> ${escapeHtml(reward)}</span></div>`;
+  const tierMarkup = tier
+    ? `<div class="celebration-tier-mark"><span class="celebration-coin" aria-hidden="true">✦</span><span class="celebration-tier-label">${escapeHtml(score.tier)} carbon tier</span></div>`
+    : '';
+  popup.innerHTML = `<div class="celebration-card"><div class="leaf-burst" aria-hidden="true"><span class="celebration-leaf leaf-one"></span><span class="celebration-leaf leaf-two"></span><span class="celebration-leaf leaf-three"></span><span class="celebration-leaf leaf-four"></span><span class="celebration-leaf leaf-five"></span><span class="celebration-leaf leaf-six"></span><span class="celebration-leaf leaf-seven"></span><span class="celebration-leaf leaf-eight"></span><span class="celebration-leaf leaf-nine"></span><span class="celebration-leaf leaf-ten"></span><span class="celebration-leaf tier-leaf tier-leaf-one"></span><span class="celebration-leaf tier-leaf tier-leaf-two"></span><span class="celebration-leaf tier-leaf tier-leaf-three"></span><span class="celebration-leaf tier-leaf tier-leaf-four"></span></div><span class="celebration-overline">SECTION COMPLETE</span><strong class="celebration-title">${escapeHtml(score.title)}</strong><span class="celebration-reward">+${score.points} XP <i aria-hidden="true">·</i> ${escapeHtml(reward)}</span>${tierMarkup}</div>`;
   popup.hidden = false;
   popup.classList.remove('is-celebrating');
   void popup.offsetWidth;
@@ -487,7 +492,8 @@ $('#next-stage').addEventListener('click', () => {
   const points = answered * 10 + (badgeEarned ? 25 : 0);
   stageScores[activeStage] = points;
   if (isFinalStage) {
-    lastScore = { title: stage.title, answered, total, points, badge: stage.badge, badgeEarned, nextIndex: activeStage + 1, totalXP: currentXP() };
+    const emissions = calculateEmissions();
+    lastScore = { title: stage.title, answered, total, points, badge: stage.badge, badgeEarned, nextIndex: activeStage + 1, totalXP: currentXP(), tier: emissions.tier };
     showSectionCelebration(lastScore);
     showResults();
     return;
