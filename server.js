@@ -165,14 +165,13 @@ function cleanSubmission(data) {
   const xp = Number.isFinite(Number(data.score?.xp)) ? Math.max(0, Math.min(10000, Math.round(Number(data.score.xp)))) : 0;
   const fieldBadges = Array.isArray(data.score?.fieldBadges) ? data.score.fieldBadges.filter((badge) => typeof badge === 'string').slice(0, 10).map((badge) => badge.slice(0, 80)) : [];
   const gridFactors = {
-    india: { name: 'India', kgPerKwh: 0.670, gPerKwh: 670 },
-    china: { name: 'China', kgPerKwh: 0.525, gPerKwh: 525 },
-    'united-states': { name: 'United States', kgPerKwh: 0.384, gPerKwh: 384 },
-    'united-kingdom': { name: 'United Kingdom', kgPerKwh: 0.2174, gPerKwh: 217.4 },
-    germany: { name: 'Germany', kgPerKwh: 0.3296, gPerKwh: 329.6 },
-    france: { name: 'France', kgPerKwh: 0.0196, gPerKwh: 19.6 },
-    japan: { name: 'Japan', kgPerKwh: 0.477, gPerKwh: 477 },
     australia: { name: 'Australia', kgPerKwh: 0.525, gPerKwh: 525 },
+    china: { name: 'China', kgPerKwh: 0.525, gPerKwh: 525 },
+    europe: { name: 'Europe', kgPerKwh: 0.210, gPerKwh: 210 },
+    india: { name: 'India', kgPerKwh: 0.670, gPerKwh: 670 },
+    japan: { name: 'Japan', kgPerKwh: 0.477, gPerKwh: 477 },
+    'united-kingdom': { name: 'United Kingdom', kgPerKwh: 0.2174, gPerKwh: 217.4 },
+    'united-states': { name: 'United States', kgPerKwh: 0.384, gPerKwh: 384 },
     global: { name: 'Global average (other country)', kgPerKwh: 0.458, gPerKwh: 458 }
   };
   const countryFactor = gridFactors[data.country?.key];

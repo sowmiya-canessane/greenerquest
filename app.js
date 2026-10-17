@@ -308,15 +308,14 @@ let submissionStarted = false;
 let selectedSchoolLevel = pageTrack === 'school' ? (document.body.dataset.schoolLevel || 'senior') : null;
 
 const GRID_FACTORS = {
-  india: { name: 'India', kgPerKwh: 0.670, gPerKwh: 670, year: 2025 },
-  china: { name: 'China', kgPerKwh: 0.525, gPerKwh: 525, year: 2025 },
-  'united-states': { name: 'United States', kgPerKwh: 0.384, gPerKwh: 384, year: 2025 },
-  'united-kingdom': { name: 'United Kingdom', kgPerKwh: 0.2174, gPerKwh: 217.4, year: 2025 },
-  germany: { name: 'Germany', kgPerKwh: 0.3296, gPerKwh: 329.6, year: 2025 },
-  france: { name: 'France', kgPerKwh: 0.0196, gPerKwh: 19.6, year: 2025 },
-  japan: { name: 'Japan', kgPerKwh: 0.477, gPerKwh: 477, year: 2025 },
   australia: { name: 'Australia', kgPerKwh: 0.525, gPerKwh: 525, year: 2025 },
-  global: { name: 'Global average (other country)', kgPerKwh: 0.458, gPerKwh: 458, year: 2025 }
+  china: { name: 'China', kgPerKwh: 0.525, gPerKwh: 525, year: 2025 },
+  europe: { name: 'Europe', kgPerKwh: 0.210, gPerKwh: 210, year: 2025 },
+  global: { name: 'Global average (other country)', kgPerKwh: 0.458, gPerKwh: 458, year: 2025 },
+  india: { name: 'India', kgPerKwh: 0.670, gPerKwh: 670, year: 2025 },
+  japan: { name: 'Japan', kgPerKwh: 0.477, gPerKwh: 477, year: 2025 },
+  'united-kingdom': { name: 'United Kingdom', kgPerKwh: 0.2174, gPerKwh: 217.4, year: 2025 },
+  'united-states': { name: 'United States', kgPerKwh: 0.384, gPerKwh: 384, year: 2025 }
 };
 
 const TRAVEL_FACTORS = {
@@ -904,7 +903,7 @@ function calculateEmissions() {
     methodology: {
       travelWeeksPerYear: activeTrack === 'school' ? 40 : 48,
       travelFactors: 'UK DESNZ 2026 factors used as educational reference proxies',
-      electricityFactors: '2025 grid-intensity factors from Ember 2026 release, with France from RTE 2025 review',
+      electricityFactors: '2025 grid-intensity factors from Ember 2026 release; Europe uses the EU-wide average',
       tierNote: 'Gamified tier based only on the tracked subtotal; not a certification or full personal footprint.'
     }
   };
@@ -918,7 +917,8 @@ function renderCarbonResults() {
   const emissions = calculateEmissions();
   $('#carbon-total').textContent = emissions.totalKg === null ? 'No quantified emissions yet' : `${formatKg(emissions.totalKg)} kg CO2e/year`;
   $('#carbon-coverage').textContent = `${emissions.coverage.estimatedSections} of ${emissions.coverage.totalSections} sections estimated. This is a partial activity subtotal, not a full carbon footprint.`;
-  $('#carbon-country').textContent = `Electricity grid proxy: ${emissions.country.name} · ${emissions.country.gridGPerKwh} g CO2e/kWh (${emissions.country.datasetYear}).`;
+  const countryLabel = emissions.country.key === 'europe' ? 'Europe (EU-wide average)' : emissions.country.name;
+  $('#carbon-country').textContent = `Electricity grid proxy: ${countryLabel} · ${emissions.country.gridGPerKwh} g CO2e/kWh (${emissions.country.datasetYear}).`;
   $('#carbon-tier-name').textContent = emissions.tier || 'Activity Explorer';
   const tierElement = $('#carbon-tier');
   tierElement.className = `carbon-tier${emissions.tier ? ` carbon-tier-${emissions.tier.toLowerCase()}` : ''}`;
@@ -1106,11 +1106,11 @@ function buildReportBlocks(data) {
     kind: 'method-section',
     title: 'How this report gets its numbers',
     paragraphs: [
-      { kind: 'body', text: 'Emissions = activity data x emission factor. This is a partial subtotal: it estimates commuting and electricity when enough details are available. Travel uses UK 2026 factors as educational proxies; electricity uses a 2025 grid factor for your chosen country. Missing sections are "not estimated," not zero. Platinum, gold, silver, and bronze are playful tiers for this subtotal, not certifications.' },
-      { kind: 'small', text: `Electricity factor: ${emissions.country.gridGPerKwh} g CO2e/kWh for ${emissions.country.name} (${emissions.country.datasetYear} generation intensity).` },
+      { kind: 'body', text: 'Emissions = activity data x emission factor. This is a partial subtotal: it estimates commuting and electricity when enough details are available. Travel uses UK 2026 factors as educational proxies; electricity uses a 2025 grid factor for your chosen location. Europe uses the EU-wide generation average. Missing sections are "not estimated," not zero. Platinum, gold, silver, and bronze are playful tiers for this subtotal, not certifications.' },
+      { kind: 'small', text: `Electricity factor: ${emissions.country.gridGPerKwh} g CO2e/kWh for ${emissions.country.name}${emissions.country.key === 'europe' ? ' (EU-wide average)' : ''} (${emissions.country.datasetYear} generation intensity).` },
       { kind: 'small', text: 'Travel factors: UK DESNZ 2026 reference factors for average car, local bus, motorbike, and taxi. Commute distance is round trip and annualized for 40 school weeks or 48 college, work, or individual weeks. Public transport uses a bus proxy; car emissions are divided by the reported occupant count.' },
       { kind: 'small', text: 'Only sections with measurable activity and a factor contribute. Unmeasured food, purchasing, waste, flight routes, and workplace energy are not treated as zero.' },
-      { kind: 'source', text: 'Sources: Ember, Global Electricity Review 2026 and supporting data; RTE, 2025 Electricity Review; UK DESNZ, Greenhouse Gas Conversion Factors 2026.' },
+      { kind: 'source', text: 'Sources: Ember, Global Electricity Review 2026 and European Electricity Review 2026; UK DESNZ, Greenhouse Gas Conversion Factors 2026.' },
       { kind: 'small', text: `Created ${new Date(data.submittedAt).toLocaleString('en', { dateStyle: 'medium', timeStyle: 'short' })}.` }
     ]
   });
