@@ -233,6 +233,67 @@ const juniorSchoolQuestionnaire = {
   ]
 };
 
+const individualQuestionnaire = {
+  label: 'Individual',
+  stages: [
+    {
+      title: 'Everyday Travel', icon: '🚲', badge: 'Route Ranger',
+      description: 'Start with the journeys you make in a typical week. Estimates are welcome.',
+      questions: [
+        { id: 'individual_mode', type: 'single', label: 'What is your most common way to travel?', options: ['Walk or bicycle', 'Public transport', 'Car', 'Two-wheeler', 'Taxi or ride-hail', 'Other'] },
+        { id: 'individual_distance', type: 'number', label: 'About how far is your usual one-way trip?', unit: 'km', step: '0.1', max: '1000' },
+        { id: 'individual_days', type: 'number', label: 'How many days a week do you make this trip?', unit: 'days / week', step: '1', max: '7' },
+        { id: 'individual_carpool', type: 'single', label: 'If you travel by car, how many people share the ride?', options: ['Just me', '2 people total', '3 or more people', 'I do not travel by car', 'Not sure'] }
+      ]
+    },
+    {
+      title: 'Home Energy', icon: '⚡', badge: 'Energy Pathfinder',
+      description: 'Look at the energy used in your home. You can check a bill or ask someone you live with.',
+      questions: [
+        { id: 'individual_monthly_kwh', type: 'number', label: 'How much electricity does your home use in a month?', help: 'Find the kWh amount on a bill. Skip if you cannot access it.', unit: 'kWh / month', step: '1', max: '100000' },
+        { id: 'individual_household_size', type: 'number', label: 'How many people share this electricity use?', unit: 'people', step: '1', max: '10' },
+        { id: 'individual_solar', type: 'single', label: 'Does your home use solar electricity?', options: ['Yes', 'No', 'Not sure'] }
+      ]
+    },
+    {
+      title: 'Food & Buying Habits', icon: '🥗', badge: 'Mindful Maker',
+      description: 'Your everyday meals and shopping habits are part of your activity snapshot too.',
+      questions: [
+        { id: 'individual_meals', type: 'single', label: 'Which best describes your usual meals?', options: ['Mostly vegetarian', 'Vegetarian with eggs', 'A mix of plant and meat meals', 'Meat most days', 'It varies / not sure'] },
+        { id: 'individual_meat_frequency', type: 'single', label: 'How often do you eat meat or fish?', options: ['Never', 'Less than once a week', '1–3 times a week', '4 or more times a week', 'Not sure'] },
+        { id: 'individual_food_waste_kg', type: 'number', label: 'How much food do you think you throw away in a typical week?', unit: 'kg / week', step: '0.1', max: '100' },
+        { id: 'individual_clothing_count', type: 'number', label: 'How many new clothing items do you buy in a typical month?', unit: 'items / month', step: '1', max: '100' }
+      ]
+    },
+    {
+      title: 'Waste & Reuse', icon: '♻️', badge: 'Circularity Captain',
+      description: 'Find out what happens to recycling, old electronics, and single-use items around you.',
+      questions: [
+        { id: 'individual_waste', type: 'single', label: 'How is waste managed where you live?', options: ['Separate collection / recycling', 'Mixed general waste', 'I take it to a collection point', 'Not sure'] },
+        { id: 'individual_disposables', type: 'single', label: 'How often do you use disposable cups, plates, or cutlery?', options: ['Never or almost never', 'A few times a month', 'A few times a week', 'Most days'] },
+        { id: 'individual_ewaste', type: 'single', label: 'What do you do with old electronics?', options: ['Official e-waste collection', 'Retailer take-back', 'Donate or pass them on', 'General rubbish', 'Keep them / not sure'] }
+      ]
+    },
+    {
+      title: 'Climate Choices', icon: '🌎', badge: 'Climate Explorer',
+      description: 'Final checkpoint! Tell us what you know and the changes you might like to explore.',
+      questions: [
+        { id: 'individual_footprint', type: 'single', label: 'Have you ever calculated your carbon footprint?', options: ['Yes', 'No', 'Not sure'] },
+        { id: 'individual_offsets', type: 'single', label: 'Do you know what a carbon offset is?', options: ['Yes, I can explain it', 'I have a rough idea', 'Not yet'] },
+        { id: 'individual_project_interest', type: 'multi', label: 'Which climate project types interest you? Choose all that apply.', options: ['Afforestation', 'Forest conservation', 'Renewable energy', 'Another verified project', 'Not sure yet'], exclusive: ['Not sure yet'] }
+      ]
+    }
+  ]
+};
+
+const OPTIONAL_QUESTION_IDS = {
+  junior: ['school_monthly_kwh'],
+  senior: ['school_monthly_kwh', 'school_purchases', 'biggest_source'],
+  college: ['domestic_flights', 'international_flights', 'monthly_kwh', 'food_waste_kg', 'project_evidence'],
+  employee: ['remote_days', 'employee_computer_hours', 'work_flights', 'office_energy_data'],
+  individual: ['individual_monthly_kwh', 'individual_food_waste_kg']
+};
+
 const pageTrack = document.body.dataset.track || 'school';
 let selectedTrack = pageTrack;
 let activeTrack = pageTrack;
@@ -244,7 +305,7 @@ let toastTimer;
 let selectedCountry = '';
 let participantEmail = '';
 let submissionStarted = false;
-let selectedSchoolLevel = pageTrack === 'school' ? 'senior' : null;
+let selectedSchoolLevel = pageTrack === 'school' ? (document.body.dataset.schoolLevel || 'senior') : null;
 
 const GRID_FACTORS = {
   india: { name: 'India', kgPerKwh: 0.670, gPerKwh: 670, year: 2025 },
@@ -278,13 +339,13 @@ function escapeHtml(value) {
 }
 
 function activeQuestionnaire(track = activeTrack) {
-  return track === 'school' && selectedSchoolLevel === 'junior'
-    ? juniorSchoolQuestionnaire
-    : questionnaires[track];
+  if (track === 'school' && selectedSchoolLevel === 'junior') return juniorSchoolQuestionnaire;
+  if (track === 'individual') return individualQuestionnaire;
+  return questionnaires[track];
 }
 
 function pathDisplayLabel(track = activeTrack) {
-  return track === 'school' ? `${selectedSchoolLevel === 'junior' ? 'Junior' : 'Senior'} School` : questionnaires[track].label;
+  return track === 'school' ? `${selectedSchoolLevel === 'junior' ? 'Junior' : 'Senior'} School` : activeQuestionnaire(track).label;
 }
 
 function selectSchoolLevel(level) {
@@ -317,6 +378,18 @@ function allQuestions(track = activeTrack) {
   return activeQuestionnaire(track).stages.flatMap((stage, stageIndex) => stage.questions.map((question) => ({ ...question, stageIndex, stageTitle: stage.title })));
 }
 
+function requiredQuestionSet(track = activeTrack) {
+  const questions = allQuestions(track);
+  const key = track === 'school' ? selectedSchoolLevel : track;
+  const optionalIds = new Set(OPTIONAL_QUESTION_IDS[key] || []);
+  const minimumRequired = Math.ceil(questions.length * 0.85);
+  return new Set(questions.filter((question) => !optionalIds.has(question.id)).slice(0, minimumRequired).map((question) => question.id));
+}
+
+function isRequiredQuestion(question, track = activeTrack) {
+  return requiredQuestionSet(track).has(question.id);
+}
+
 function answerExists(question) {
   const value = answers[question.id];
   if (Array.isArray(value)) return value.length > 0;
@@ -328,7 +401,7 @@ function answeredQuestions(track = activeTrack) {
 }
 
 function completedStages(track = activeTrack) {
-  return activeQuestionnaire(track).stages.filter((stage, index) => stageScores[index] !== undefined && stage.questions.every(answerExists)).length;
+  return activeQuestionnaire(track).stages.filter((stage, index) => stageScores[index] !== undefined && stage.questions.filter((question) => isRequiredQuestion(question, track)).every(answerExists)).length;
 }
 
 function currentXP() {
@@ -348,6 +421,8 @@ heroPathButtons.forEach((button) => button.addEventListener('click', () => selec
 
 function renderQuestion(question, index) {
   const current = answers[question.id];
+  const required = isRequiredQuestion(question);
+  const requirementBadge = `<span class="question-requirement${required ? ' is-required' : ''}">${required ? 'Required' : 'Optional'}</span>`;
   let control;
   if (question.type === 'number') {
     const questionId = escapeHtml(question.id);
@@ -358,9 +433,9 @@ function renderQuestion(question, index) {
     const sliderValue = current === undefined ? 0 : Math.min(Number(current) || 0, sliderMax);
     const valueLabel = current === undefined ? 'Choose a value or type one' : `${escapeHtml(current)}${unit ? ` ${unit}` : ''}`;
     const numberHint = sliderMax < max
-      ? `Slider to ${sliderMax}${unit ? ` ${unit}` : ''}; type a larger value if needed. Optional.`
-      : 'Use the slider or enter a number. Optional.';
-    control = `<div class="number-control"><div class="number-wrap"><input type="number" inputmode="decimal" id="answer-${questionId}" data-action="number" data-question="${questionId}" aria-label="${escapeHtml(question.label)} number entry" min="0"${question.max ? ` max="${escapeHtml(question.max)}"` : ''} step="${escapeHtml(question.step || '1')}" placeholder="Your estimate" value="${value}"/><span class="number-unit">${unit}</span></div><div class="range-wrap"><input class="number-range" type="range" id="slider-${questionId}" data-action="range" data-question="${questionId}" min="0" max="${sliderMax}" step="${escapeHtml(question.step || '1')}" value="${sliderValue}" aria-label="${escapeHtml(question.label)} slider" aria-controls="answer-${questionId}" aria-describedby="range-value-${questionId}"/><output class="range-value" id="range-value-${questionId}" for="slider-${questionId}">${valueLabel}</output></div><span class="number-hint">${numberHint}</span></div>`;
+      ? `Slider to ${sliderMax}${unit ? ` ${unit}` : ''}; type a larger value if needed. ${required ? 'Required.' : 'Optional.'}`
+      : `Use the slider or enter a number. ${required ? 'Required.' : 'Optional.'}`;
+    control = `<div class="number-control"><div class="number-wrap"><input type="number" inputmode="decimal" id="answer-${questionId}" data-action="number" data-question="${questionId}" aria-label="${escapeHtml(question.label)} number entry" min="0"${question.max ? ` max="${escapeHtml(question.max)}"` : ''} step="${escapeHtml(question.step || '1')}" placeholder="Your estimate" value="${value}"${required ? ' required' : ''}/><span class="number-unit">${unit}</span></div><div class="range-wrap"><input class="number-range" type="range" id="slider-${questionId}" data-action="range" data-question="${questionId}" min="0" max="${sliderMax}" step="${escapeHtml(question.step || '1')}" value="${sliderValue}" aria-label="${escapeHtml(question.label)} slider" aria-controls="answer-${questionId}" aria-describedby="range-value-${questionId}"/><output class="range-value" id="range-value-${questionId}" for="slider-${questionId}">${valueLabel}</output></div><span class="number-hint">${numberHint}</span></div>`;
   } else {
     const isMulti = question.type === 'multi';
     const selectedValues = Array.isArray(current) ? current : current ? [current] : [];
@@ -368,9 +443,9 @@ function renderQuestion(question, index) {
       const selected = selectedValues.includes(option);
       return `<button type="button" class="answer-option${isMulti ? ' multi' : ''}" data-action="answer" data-question="${escapeHtml(question.id)}" data-value="${escapeHtml(option)}" aria-pressed="${selected}">${escapeHtml(option)}</button>`;
     }).join('');
-    control = `${question.help ? `<p class="question-help">${escapeHtml(question.help)}</p>` : ''}<div class="answer-options" role="group" aria-label="${escapeHtml(question.label)}${isMulti ? ' Choose all that apply' : ''}">${options}</div>`;
+    control = `${question.help ? `<p class="question-help">${escapeHtml(question.help)}</p>` : ''}<div class="answer-options" role="group" aria-label="${escapeHtml(question.label)}${isMulti ? ' Choose all that apply' : ''}" aria-required="${required}">${options}</div>`;
   }
-  return `<div class="question-card" role="group" aria-labelledby="label-${escapeHtml(question.id)}"><div class="question-heading"><span class="question-number">${index + 1}</span><h4 id="label-${escapeHtml(question.id)}">${escapeHtml(question.label)}</h4></div>${control}</div>`;
+  return `<div class="question-card${required ? ' is-required-question' : ''}" role="group" aria-labelledby="label-${escapeHtml(question.id)}"><div class="question-heading"><span class="question-number">${index + 1}</span><h4 id="label-${escapeHtml(question.id)}">${escapeHtml(question.label)}</h4>${requirementBadge}</div>${control}</div>`;
 }
 
 function renderStage() {
@@ -378,11 +453,13 @@ function renderStage() {
   const stage = questionnaire.stages[activeStage];
   const stages = questionnaire.stages;
   const questions = stage.questions.map((question, index) => renderQuestion(question, index)).join('');
+  const stageRequiredTotal = stage.questions.filter((question) => isRequiredQuestion(question)).length;
+  const stageRequiredAnswered = stage.questions.filter((question) => isRequiredQuestion(question) && answerExists(question)).length;
   const checkpoint = lastScore?.nextIndex === activeStage ? renderCheckpoint(lastScore) : '';
   const emailPrompt = activeStage === stages.length - 1
     ? `<div class="final-email-card"><div class="final-email-copy"><span class="card-kicker">YOUR PDF REPORT</span><strong>Enter your email to unlock the download</strong><small>A valid email address is needed before you finish.</small></div><label class="email-picker" for="participant-email"><span>Email address</span><input id="participant-email" type="email" name="email" autocomplete="email" maxlength="254" placeholder="you@example.com" value="${escapeHtml(participantEmail)}" required /></label></div>`
     : '';
-  stagePanel.innerHTML = `${checkpoint}<div class="stage-panel-head"><div><div class="stage-overline">SECTION ${activeStage + 1} · FIELD BADGE: ${escapeHtml(stage.badge)}</div><h3>${escapeHtml(stage.title)}</h3><p>${escapeHtml(stage.description)}</p></div><span class="stage-count-badge">${stage.questions.filter(answerExists).length} / ${stage.questions.length} answered</span></div><div class="question-grid">${questions}</div>${emailPrompt}`;
+  stagePanel.innerHTML = `${checkpoint}<div class="stage-panel-head"><div><div class="stage-overline">SECTION ${activeStage + 1} · FIELD BADGE: ${escapeHtml(stage.badge)}</div><h3>${escapeHtml(stage.title)}</h3><p>${escapeHtml(stage.description)}</p></div><span class="stage-count-badge">${stage.questions.filter(answerExists).length} / ${stage.questions.length} answered</span></div><div class="section-required-progress" id="section-required-progress" role="status"><strong>${stageRequiredAnswered} of ${stageRequiredTotal} required answers complete</strong><span>Required questions are marked. Optional questions can be skipped.</span></div><div class="question-grid">${questions}</div>${emailPrompt}`;
   $('#stage-counter').textContent = `SECTION ${activeStage + 1} OF ${stages.length}`;
   $('#previous-stage').disabled = activeStage === 0;
   $('#previous-stage').textContent = '← Previous section';
@@ -394,7 +471,9 @@ function renderStage() {
       : 'A few questions about everyday school life. “Not sure” is a perfectly good answer.'
     : activeTrack === 'college'
       ? 'A detailed activity snapshot for college life. Estimates are fine, and you can skip anything you don’t know.'
-      : 'A workplace activity snapshot for employees. Estimates are fine, and you can skip anything you don’t know.';
+      : activeTrack === 'employee'
+        ? 'A workplace activity snapshot for employees. Estimates are fine, and you can skip anything you don’t know.'
+        : 'A personal activity snapshot of travel, home energy, food, shopping, and waste.';
   updateQuestChrome();
 }
 
@@ -443,6 +522,8 @@ function showSectionCelebration(score) {
 function updateQuestChrome() {
   const total = allQuestions().length;
   const answered = answeredQuestions().length;
+  const requiredIds = requiredQuestionSet();
+  const requiredAnswered = allQuestions().filter((question) => requiredIds.has(question.id) && answerExists(question)).length;
   const percent = total ? Math.round(answered / total * 100) : 0;
   $('#xp-count').textContent = `${currentXP()} XP`;
   $('#answer-count').textContent = `${answered} answered`;
@@ -450,6 +531,21 @@ function updateQuestChrome() {
   $('#overall-label').textContent = `${answered} of ${total} activity notes`;
   $('#overall-percent').textContent = `${percent}%`;
   $('#overall-progress-fill').style.width = `${percent}%`;
+  let policy = $('#mandatory-question-policy');
+  if (!policy) {
+    policy = document.createElement('div');
+    policy.id = 'mandatory-question-policy';
+    policy.className = 'mandatory-question-policy';
+    $('.score-rules')?.before(policy);
+  }
+  if (policy) policy.innerHTML = `<strong>${requiredAnswered} / ${requiredIds.size} required answers complete</strong><span>${requiredIds.size} of ${total} questions are required (at least 85%). Required questions are marked; the rest are optional.</span>`;
+  const sectionRequirement = $('#section-required-progress');
+  if (sectionRequirement) {
+    const stage = activeQuestionnaire().stages[activeStage];
+    const stageRequired = stage.questions.filter((question) => isRequiredQuestion(question));
+    const done = stageRequired.filter(answerExists).length;
+    sectionRequirement.innerHTML = `<strong>${done} of ${stageRequired.length} required answers complete</strong><span>Answer the required questions in this section to continue. Optional questions can be skipped.</span>`;
+  }
   if (activeTrack === 'school') {
     $('#score-rules-copy').textContent = selectedSchoolLevel === 'junior'
       ? '15 star points per answer · +30 for a complete mini quest · +50 grand-finale bonus'
@@ -571,6 +667,26 @@ $('#next-stage').addEventListener('click', () => {
   const stages = activeQuestionnaire().stages;
   const stage = stages[activeStage];
   const isFinalStage = activeStage === stages.length - 1;
+  const missingRequired = stage.questions.filter((question) => isRequiredQuestion(question) && !answerExists(question));
+  if (missingRequired.length) {
+    const question = missingRequired[0];
+    if (question.type === 'number') {
+      const input = document.getElementById(`answer-${question.id}`);
+      input?.focus();
+      input?.reportValidity();
+    } else {
+      [...stagePanel.querySelectorAll('.answer-option')].find((option) => option.dataset.question === question.id)?.focus();
+    }
+    showToast(`Answer the ${missingRequired.length} required question${missingRequired.length === 1 ? '' : 's'} in this section before continuing.`);
+    return;
+  }
+  const invalidNumber = stage.questions.find((question) => question.type === 'number' && answerExists(question) && !document.getElementById(`answer-${question.id}`).checkValidity());
+  if (invalidNumber) {
+    const input = document.getElementById(`answer-${invalidNumber.id}`);
+    input.focus();
+    input.reportValidity();
+    return;
+  }
   if (isFinalStage) {
     const emailInput = $('#participant-email');
     emailInput.value = emailInput.value.trim();
@@ -584,7 +700,7 @@ $('#next-stage').addEventListener('click', () => {
   }
   const answered = stage.questions.filter(answerExists).length;
   const total = stage.questions.length;
-  const badgeEarned = answered === total;
+  const badgeEarned = stage.questions.filter((question) => isRequiredQuestion(question)).every(answerExists);
   const junior = activeTrack === 'school' && selectedSchoolLevel === 'junior';
   const points = answered * (junior ? 15 : 10) + (badgeEarned ? (junior ? 30 : 25) : 0);
   stageScores[activeStage] = points;
@@ -624,7 +740,7 @@ function renderSummary() {
 function getSuggestions() {
   const suggestions = [];
   const get = (key) => answers[key];
-  const commute = get(activeTrack === 'school' ? 'school_mode' : activeTrack === 'college' ? 'college_mode' : 'employee_mode');
+  const commute = get(activeTrack === 'school' ? 'school_mode' : activeTrack === 'college' ? 'college_mode' : activeTrack === 'employee' ? 'employee_mode' : 'individual_mode');
   if (['Family car', 'Two-wheeler', 'Car', 'Taxi or ride-hail'].includes(commute)) {
     suggestions.push('For a route where it is safe and practical, compare a shared ride or public transport option for one trip.');
   } else if (['Bicycle', 'Walk', 'Walk or bicycle'].includes(commute)) {
@@ -634,7 +750,7 @@ function getSuggestions() {
   }
 
   const switchOff = get(activeTrack === 'school' ? 'switch_off' : activeTrack === 'employee' ? 'device_powerdown' : undefined);
-  const solar = get(activeTrack === 'school' ? 'home_solar' : activeTrack === 'college' ? 'college_solar' : 'office_renewable');
+  const solar = get(activeTrack === 'school' ? 'home_solar' : activeTrack === 'college' ? 'college_solar' : activeTrack === 'employee' ? 'office_renewable' : 'individual_solar');
   if (['Sometimes', 'Rarely', 'No'].includes(switchOff)) {
     suggestions.push('Try a simple end-of-study check: switch off lights, fans, and screens when you leave.');
   } else if (solar === 'No') {
@@ -674,7 +790,8 @@ function commuteEstimate() {
   const options = {
     school: { mode: 'school_mode', distance: 'school_distance', days: 'school_days', weeks: 40, occupancy: 'school_carpool' },
     college: { mode: 'college_mode', distance: 'college_distance', days: 'college_days', weeks: 48, occupancy: 'ride_share' },
-    employee: { mode: 'employee_mode', distance: 'employee_distance', days: 'workplace_days', weeks: 48, occupancy: 'employee_carpool' }
+    employee: { mode: 'employee_mode', distance: 'employee_distance', days: 'workplace_days', weeks: 48, occupancy: 'employee_carpool' },
+    individual: { mode: 'individual_mode', distance: 'individual_distance', days: 'individual_days', weeks: 48, occupancy: 'individual_carpool' }
   }[activeTrack];
   const mode = answers[options.mode];
   if (!mode) return { kg: null, reason: 'Commute mode was not provided.' };
@@ -722,6 +839,16 @@ function electricityEstimate() {
   if (activeTrack === 'school') {
     const monthly = numericAnswer('school_monthly_kwh');
     const people = numericAnswer('school_household_size');
+    if (monthly === null) return { kg: null, reason: 'No exact monthly electricity amount was entered.' };
+    if (!people || people < 1) return { kg: null, reason: 'Add the number of people sharing the household electricity use.' };
+    return {
+      kg: monthly * 12 / people * grid.kgPerKwh,
+      reason: `Household kWh divided by ${people} people, annualized, then multiplied by the ${grid.name} ${grid.year} grid factor.`
+    };
+  }
+  if (activeTrack === 'individual') {
+    const monthly = numericAnswer('individual_monthly_kwh');
+    const people = numericAnswer('individual_household_size');
     if (monthly === null) return { kg: null, reason: 'No exact monthly electricity amount was entered.' };
     if (!people || people < 1) return { kg: null, reason: 'Add the number of people sharing the household electricity use.' };
     return {
@@ -814,11 +941,12 @@ function showResults() {
   const titles = {
     school: 'Everyday Climate Explorer',
     college: 'Carbon Accounting Explorer',
-    employee: 'Workplace Climate Explorer'
+    employee: 'Workplace Climate Explorer',
+    individual: 'Personal Climate Explorer'
   };
   $('#result-badge-title').textContent = activeTrack === 'school' && selectedSchoolLevel === 'junior' ? 'Junior Planet Explorer' : titles[activeTrack];
   $('#next-steps').innerHTML = getSuggestions().map((suggestion) => `<li>${escapeHtml(suggestion)}</li>`).join('');
-  const earned = activeQuestionnaire().stages.filter((stage, index) => stageScores[index] !== undefined && stage.questions.every(answerExists)).map((stage) => stage.badge);
+  const earned = activeQuestionnaire().stages.filter((stage, index) => stageScores[index] !== undefined && stage.questions.filter((question) => isRequiredQuestion(question)).every(answerExists)).map((stage) => stage.badge);
   $('#earned-badges').innerHTML = earned.length
     ? earned.map((badge, index) => `<span class="earned-badge" style="--badge-index:${index}"><span>✳</span>${escapeHtml(badge)}</span>`).join('')
     : '<span class="earned-badge"><span>✧</span>Curiosity Starter</span>';
@@ -853,14 +981,14 @@ function buildSubmissionData() {
   const emissions = calculateEmissions();
   return {
     questionnaire: 'GreenerQuest',
-    studentPath: activeTrack === 'school' ? pathDisplayLabel() : questionnaires[activeTrack].label,
+    studentPath: pathDisplayLabel(),
     pathLabel: pathDisplayLabel(),
     schoolLevel: activeTrack === 'school' ? (selectedSchoolLevel === 'junior' ? 'Junior' : 'Senior') : undefined,
     email: participantEmail,
     submittedAt: new Date().toISOString(),
     score: {
       xp: currentXP() + (answeredQuestions().length > 0 ? 50 : 0),
-      fieldBadges: activeQuestionnaire().stages.filter((stage, index) => stageScores[index] !== undefined && stage.questions.every(answerExists)).map((stage) => stage.badge)
+      fieldBadges: activeQuestionnaire().stages.filter((stage, index) => stageScores[index] !== undefined && stage.questions.filter((question) => isRequiredQuestion(question)).every(answerExists)).map((stage) => stage.badge)
     },
     country: emissions.country,
     emissions,
@@ -913,7 +1041,8 @@ function buildReportBlocks(data) {
     'Junior School': 'Junior Planet Explorer',
     'Senior School': 'Everyday Climate Explorer',
     College: 'Carbon Accounting Explorer',
-    Employee: 'Workplace Climate Explorer'
+    Employee: 'Workplace Climate Explorer',
+    Individual: 'Personal Climate Explorer'
   };
   const hasAnswers = data.responses.length > 0;
   const xpSummary = hasAnswers
@@ -979,7 +1108,7 @@ function buildReportBlocks(data) {
     paragraphs: [
       { kind: 'body', text: 'Emissions = activity data x emission factor. This is a partial subtotal: it estimates commuting and electricity when enough details are available. Travel uses UK 2026 factors as educational proxies; electricity uses a 2025 grid factor for your chosen country. Missing sections are "not estimated," not zero. Platinum, gold, silver, and bronze are playful tiers for this subtotal, not certifications.' },
       { kind: 'small', text: `Electricity factor: ${emissions.country.gridGPerKwh} g CO2e/kWh for ${emissions.country.name} (${emissions.country.datasetYear} generation intensity).` },
-      { kind: 'small', text: 'Travel factors: UK DESNZ 2026 reference factors for average car, local bus, motorbike, and taxi. Commute distance is round trip and annualized for 40 school weeks or 48 college/work weeks. Public transport uses a bus proxy; car emissions are divided by the reported occupant count.' },
+      { kind: 'small', text: 'Travel factors: UK DESNZ 2026 reference factors for average car, local bus, motorbike, and taxi. Commute distance is round trip and annualized for 40 school weeks or 48 college, work, or individual weeks. Public transport uses a bus proxy; car emissions are divided by the reported occupant count.' },
       { kind: 'small', text: 'Only sections with measurable activity and a factor contribute. Unmeasured food, purchasing, waste, flight routes, and workplace energy are not treated as zero.' },
       { kind: 'source', text: 'Sources: Ember, Global Electricity Review 2026 and supporting data; RTE, 2025 Electricity Review; UK DESNZ, Greenhouse Gas Conversion Factors 2026.' },
       { kind: 'small', text: `Created ${new Date(data.submittedAt).toLocaleString('en', { dateStyle: 'medium', timeStyle: 'short' })}.` }

@@ -35,8 +35,10 @@ const allowedPaths = new Map([
   ['/', 'index.html'],
   ['/index.html', 'index.html'],
   ['/school.html', 'school.html'],
+  ['/junior.html', 'junior.html'],
   ['/college.html', 'college.html'],
   ['/employee.html', 'employee.html'],
+  ['/individual.html', 'individual.html'],
   ['/assets/greenquest-earth-footprint.png', 'assets/greenquest-earth-footprint.png'],
   ['/styles.css', 'styles.css'],
   ['/app.js', 'app.js'],
@@ -131,7 +133,8 @@ function cleanSubmission(data) {
     'junior school': 'Junior School',
     'senior school': 'Senior School',
     college: 'College',
-    employee: 'Employee'
+    employee: 'Employee',
+    individual: 'Individual'
   };
   if (!trackLabels[track]) throw Object.assign(new Error('Choose a valid questionnaire path.'), { statusCode: 400 });
   const email = String(data?.email || '').trim();

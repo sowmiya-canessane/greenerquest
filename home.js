@@ -13,6 +13,34 @@ mainNav.querySelectorAll('a').forEach((link) => link.addEventListener('click', (
   menuToggle.setAttribute('aria-label', 'Open menu');
 }));
 
+const audienceTabs = [...document.querySelectorAll('[role="tab"][aria-controls]')];
+const audiencePanels = audienceTabs.map((tab) => document.getElementById(tab.getAttribute('aria-controls')));
+
+function selectAudienceTab(index, focusTab = false) {
+  audienceTabs.forEach((tab, tabIndex) => {
+    const selected = tabIndex === index;
+    tab.classList.toggle('is-active', selected);
+    tab.setAttribute('aria-selected', String(selected));
+    tab.tabIndex = selected ? 0 : -1;
+    if (selected && focusTab) tab.focus();
+    audiencePanels[tabIndex].hidden = !selected;
+  });
+}
+
+audienceTabs.forEach((tab, index) => {
+  tab.addEventListener('click', () => selectAudienceTab(index));
+  tab.addEventListener('keydown', (event) => {
+    const next = event.key === 'ArrowRight' ? (index + 1) % audienceTabs.length
+      : event.key === 'ArrowLeft' ? (index - 1 + audienceTabs.length) % audienceTabs.length
+        : event.key === 'Home' ? 0
+          : event.key === 'End' ? audienceTabs.length - 1
+            : -1;
+    if (next < 0) return;
+    event.preventDefault();
+    selectAudienceTab(next, true);
+  });
+});
+
 document.querySelectorAll('.how-card').forEach((card) => {
   card.addEventListener('click', () => {
     const isFlipped = card.classList.toggle('is-flipped');
