@@ -223,6 +223,7 @@ const heroPathButtons = document.querySelectorAll('.pathway-option');
 const questSection = $('#quest');
 const resultsSection = $('#results');
 const stagePanel = $('#stage-panel');
+let celebrationTimeout;
 
 function escapeHtml(value) {
   return String(value).replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
@@ -265,7 +266,17 @@ function renderQuestion(question, index) {
   const current = answers[question.id];
   let control;
   if (question.type === 'number') {
-    control = `<div class="number-wrap"><input type="number" inputmode="decimal" id="answer-${escapeHtml(question.id)}" data-action="number" data-question="${escapeHtml(question.id)}" aria-label="${escapeHtml(question.label)}" min="0"${question.max ? ` max="${escapeHtml(question.max)}"` : ''} step="${escapeHtml(question.step || '1')}" placeholder="Your estimate" value="${current === undefined ? '' : escapeHtml(current)}"/><span class="number-unit">${escapeHtml(question.unit || '')}</span><span class="number-hint">optional</span></div>`;
+    const questionId = escapeHtml(question.id);
+    const unit = escapeHtml(question.unit || '');
+    const max = Number(question.max || 100);
+    const sliderMax = Math.min(Number.isFinite(max) && max > 0 ? max : 100, 1000);
+    const value = current === undefined ? '' : escapeHtml(current);
+    const sliderValue = current === undefined ? 0 : Math.min(Number(current) || 0, sliderMax);
+    const valueLabel = current === undefined ? 'Choose a value or type one' : `${escapeHtml(current)}${unit ? ` ${unit}` : ''}`;
+    const numberHint = sliderMax < max
+      ? `Slider to ${sliderMax}${unit ? ` ${unit}` : ''}; type a larger value if needed. Optional.`
+      : 'Use the slider or enter a number. Optional.';
+    control = `<div class="number-control"><div class="number-wrap"><input type="number" inputmode="decimal" id="answer-${questionId}" data-action="number" data-question="${questionId}" aria-label="${escapeHtml(question.label)} number entry" min="0"${question.max ? ` max="${escapeHtml(question.max)}"` : ''} step="${escapeHtml(question.step || '1')}" placeholder="Your estimate" value="${value}"/><span class="number-unit">${unit}</span></div><div class="range-wrap"><input class="number-range" type="range" id="slider-${questionId}" data-action="range" data-question="${questionId}" min="0" max="${sliderMax}" step="${escapeHtml(question.step || '1')}" value="${sliderValue}" aria-label="${escapeHtml(question.label)} slider" aria-controls="answer-${questionId}" aria-describedby="range-value-${questionId}"/><output class="range-value" id="range-value-${questionId}" for="slider-${questionId}">${valueLabel}</output></div><span class="number-hint">${numberHint}</span></div>`;
   } else {
     const isMulti = question.type === 'multi';
     const selectedValues = Array.isArray(current) ? current : current ? [current] : [];
@@ -306,6 +317,33 @@ function renderCheckpoint(score) {
     : '<small>Badge progress saved—keep going!</small>';
   const confetti = score.badgeEarned ? '<span class="checkpoint-confetti confetti-a" aria-hidden="true">✦</span><span class="checkpoint-confetti confetti-b" aria-hidden="true">✳</span><span class="checkpoint-confetti confetti-c" aria-hidden="true">●</span><span class="checkpoint-confetti confetti-d" aria-hidden="true">✦</span>' : '';
   return `<div class="checkpoint-card${score.badgeEarned ? ' badge-earned' : ''}" role="status">${confetti}<span class="checkpoint-spark" aria-hidden="true">${score.badgeEarned ? '✦' : '✧'}</span><div class="checkpoint-copy"><span class="checkpoint-kicker">SECTION COMPLETE · ${escapeHtml(score.title)}</span><strong>${score.answered} / ${score.total} answers <span class="xp-reward">+${score.points} XP</span></strong>${badgeStatus}</div><div class="checkpoint-total"><strong>${score.totalXP} XP</strong><small>total so far</small></div><button class="checkpoint-dismiss" type="button" data-dismiss-score aria-label="Dismiss score summary">×</button></div>`;
+}
+
+function showSectionCelebration(score) {
+  let popup = $('#section-celebration');
+  if (!popup) {
+    popup = document.createElement('div');
+    popup.id = 'section-celebration';
+    popup.className = 'section-celebration';
+    popup.setAttribute('role', 'status');
+    popup.setAttribute('aria-live', 'polite');
+    popup.setAttribute('aria-atomic', 'true');
+    document.body.append(popup);
+  }
+
+  const reward = score.badgeEarned
+    ? `${score.badge} badge unlocked!`
+    : `${score.answered} of ${score.total} answers counted`;
+  popup.innerHTML = `<div class="celebration-card"><div class="leaf-burst" aria-hidden="true"><span class="celebration-leaf leaf-one"></span><span class="celebration-leaf leaf-two"></span><span class="celebration-leaf leaf-three"></span><span class="celebration-leaf leaf-four"></span><span class="celebration-leaf leaf-five"></span><span class="celebration-leaf leaf-six"></span></div><span class="celebration-overline">SECTION COMPLETE</span><strong class="celebration-title">${escapeHtml(score.title)}</strong><span class="celebration-reward">+${score.points} XP <i aria-hidden="true">·</i> ${escapeHtml(reward)}</span></div>`;
+  popup.hidden = false;
+  popup.classList.remove('is-celebrating');
+  void popup.offsetWidth;
+  popup.classList.add('is-celebrating');
+  window.clearTimeout(celebrationTimeout);
+  celebrationTimeout = window.setTimeout(() => {
+    popup.hidden = true;
+    popup.classList.remove('is-celebrating');
+  }, 2400);
 }
 
 function updateQuestChrome() {
@@ -398,13 +436,27 @@ stagePanel.addEventListener('input', (event) => {
     participantEmail = emailInput.value;
     return;
   }
-  const input = event.target.closest('[data-action="number"]');
+  const input = event.target.closest('[data-action="number"], [data-action="range"]');
   if (!input) return;
   const question = allQuestions().find((item) => item.id === input.dataset.question);
   if (!question) return;
+  const numberInput = document.getElementById(`answer-${question.id}`);
+  const rangeInput = document.getElementById(`slider-${question.id}`);
+  const rangeOutput = document.getElementById(`range-value-${question.id}`);
+  if (input.dataset.action === 'range') {
+    numberInput.value = rangeInput.value;
+  } else {
+    const numberValue = input.value === '' ? NaN : Number(input.value);
+    rangeInput.value = Number.isFinite(numberValue) ? Math.min(numberValue, Number(rangeInput.max)) : 0;
+  }
+  const displayValue = numberInput.value === ''
+    ? 'Choose a value or type one'
+    : `${numberInput.value}${question.unit ? ` ${question.unit}` : ''}`;
+  rangeOutput.textContent = displayValue;
+  rangeInput.setAttribute('aria-valuetext', `${rangeInput.value}${question.unit ? ` ${question.unit}` : ''}`);
   delete stageScores[activeStage];
-  if (input.value === '') delete answers[question.id];
-  else answers[question.id] = input.value;
+  if (numberInput.value === '') delete answers[question.id];
+  else answers[question.id] = numberInput.value;
   updateQuestChrome();
 });
 
@@ -436,12 +488,14 @@ $('#next-stage').addEventListener('click', () => {
   stageScores[activeStage] = points;
   if (isFinalStage) {
     lastScore = { title: stage.title, answered, total, points, badge: stage.badge, badgeEarned, nextIndex: activeStage + 1, totalXP: currentXP() };
+    showSectionCelebration(lastScore);
     showResults();
     return;
   }
   activeStage += 1;
   lastScore = { title: stage.title, answered, total, points, badge: stage.badge, badgeEarned, nextIndex: activeStage, totalXP: currentXP() };
   renderStage();
+  showSectionCelebration(lastScore);
   stagePanel.scrollIntoView({ behavior: 'smooth', block: 'center' });
 });
 
