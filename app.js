@@ -187,6 +187,52 @@ const questionnaires = {
   }
 };
 
+const juniorSchoolQuestionnaire = {
+  label: 'School',
+  stages: [
+    {
+      title: 'School Trip Superstars', icon: '🚌', badge: 'Route Rocket',
+      description: 'Blast off! Tell us how you usually travel and how far your school is from home.',
+      questions: [
+        { id: 'school_mode', type: 'single', label: 'How do you usually get to school?', options: ['School bus', 'Public transport', 'Family car', 'Two-wheeler', 'Bicycle', 'Walk', 'Other'] },
+        { id: 'school_distance', type: 'number', label: 'About how many kilometres is home from school, one way?', help: 'A grown-up can help you check a map. Up to 25 km.', unit: 'km', step: '0.1', max: '25' }
+      ]
+    },
+    {
+      title: 'Energy Power-Up', icon: '⚡', badge: 'Energy Hero',
+      description: 'Power up your planet smarts! If you can, ask a grown-up to check your home electricity bill.',
+      questions: [
+        { id: 'school_monthly_kwh', type: 'number', label: 'How much electricity does your home use in a month?', help: 'Look for kWh on the bill with a grown-up. It’s okay to skip if you can’t find it.', unit: 'kWh / month', step: '1', max: '100000' },
+        { id: 'school_household_size', type: 'number', label: 'How many people share the electricity at home?', help: 'Count everyone who lives in your home.', unit: 'people', step: '1', max: '10' }
+      ]
+    },
+    {
+      title: 'Food Hero Challenge', icon: '🍎', badge: 'Food Friend',
+      description: 'Food heroes help good food find a happy ending. What happens at your home?',
+      questions: [
+        { id: 'vegetarian_meals', type: 'single', label: 'How often do you eat vegetarian meals?', options: ['Every day', 'Most days', 'Some days', 'Rarely', 'Not sure'] },
+        { id: 'food_leftovers', type: 'single', label: 'How often does leftover food get thrown away at home?', options: ['Never or almost never', 'Once in a while', 'A few times a week', 'Most days', 'Not sure'] }
+      ]
+    },
+    {
+      title: 'Waste Wizard Mission', icon: '♻️', badge: 'Waste Wizard',
+      description: 'You’re on a sorting mission! Find out what happens to rubbish and food scraps at home.',
+      questions: [
+        { id: 'household_separation', type: 'single', label: 'Does your household sort wet and dry rubbish separately?', options: ['Yes, regularly', 'Sometimes', 'No', 'Not sure'] },
+        { id: 'food_waste_method', type: 'single', label: 'What usually happens to food scraps at home?', options: ['Composted', 'Collected separately', 'Put in mixed rubbish', 'Fed to animals', 'Not sure'] }
+      ]
+    },
+    {
+      title: 'Planet Detective Finale', icon: '🌎', badge: 'Planet Protector',
+      description: 'Final level! Put on your detective hat and share what you know about our planet.',
+      questions: [
+        { id: 'heard_footprint', type: 'single', label: 'Have you heard of a carbon footprint?', options: ['Yes, and I know what it means', 'I have heard the phrase', 'Not yet'] },
+        { id: 'biggest_source', type: 'single', label: 'What do you think creates the most emissions in daily life?', options: ['Travel', 'Electricity', 'Food', 'Shopping or waste', 'Not sure yet'] }
+      ]
+    }
+  ]
+};
+
 const pageTrack = document.body.dataset.track || 'school';
 let selectedTrack = pageTrack;
 let activeTrack = pageTrack;
@@ -198,6 +244,7 @@ let toastTimer;
 let selectedCountry = '';
 let participantEmail = '';
 let submissionStarted = false;
+let selectedSchoolLevel = pageTrack === 'school' ? 'senior' : null;
 
 const GRID_FACTORS = {
   india: { name: 'India', kgPerKwh: 0.670, gPerKwh: 670, year: 2025 },
@@ -220,6 +267,7 @@ const TRAVEL_FACTORS = {
 
 const $ = (selector) => document.querySelector(selector);
 const heroPathButtons = document.querySelectorAll('.pathway-option');
+const schoolLevelButtons = document.querySelectorAll('.school-level-option');
 const questSection = $('#quest');
 const resultsSection = $('#results');
 const stagePanel = $('#stage-panel');
@@ -229,8 +277,44 @@ function escapeHtml(value) {
   return String(value).replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
 }
 
+function activeQuestionnaire(track = activeTrack) {
+  return track === 'school' && selectedSchoolLevel === 'junior'
+    ? juniorSchoolQuestionnaire
+    : questionnaires[track];
+}
+
+function pathDisplayLabel(track = activeTrack) {
+  return track === 'school' ? `${selectedSchoolLevel === 'junior' ? 'Junior' : 'Senior'} School` : questionnaires[track].label;
+}
+
+function selectSchoolLevel(level) {
+  if (questSection && !questSection.hidden) {
+    showToast('Finish this quest before changing school levels.');
+    return;
+  }
+  if (resultsSection && !resultsSection.hidden) {
+    resultsSection.hidden = true;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+  selectedSchoolLevel = level === 'junior' ? 'junior' : 'senior';
+  schoolLevelButtons.forEach((button) => {
+    const selected = button.dataset.schoolLevel === selectedSchoolLevel;
+    button.classList.toggle('is-active', selected);
+    button.setAttribute('aria-pressed', String(selected));
+  });
+  const junior = selectedSchoolLevel === 'junior';
+  $('#start-button').innerHTML = `Start ${junior ? 'Junior' : 'Senior'} quest <span aria-hidden="true">↗</span>`;
+  $('#path-question-count').textContent = junior ? '10 quick questions · about 3 minutes' : '21 questions · about 5 minutes';
+  $('#path-time-note').innerHTML = `◷ &nbsp;About ${junior ? '3' : '5'} minutes`;
+  $('#school-level-icon').textContent = junior ? '🧭' : '🌿';
+  $('#school-level-title').textContent = junior ? 'Junior Explorer' : 'Senior School Explorer';
+  $('#school-level-meta').textContent = junior ? '5 mini quests · 5 badges' : '4 field missions · 4 badges';
+}
+
+schoolLevelButtons.forEach((button) => button.addEventListener('click', () => selectSchoolLevel(button.dataset.schoolLevel)));
+
 function allQuestions(track = activeTrack) {
-  return questionnaires[track].stages.flatMap((stage, stageIndex) => stage.questions.map((question) => ({ ...question, stageIndex, stageTitle: stage.title })));
+  return activeQuestionnaire(track).stages.flatMap((stage, stageIndex) => stage.questions.map((question) => ({ ...question, stageIndex, stageTitle: stage.title })));
 }
 
 function answerExists(question) {
@@ -244,7 +328,7 @@ function answeredQuestions(track = activeTrack) {
 }
 
 function completedStages(track = activeTrack) {
-  return questionnaires[track].stages.filter((stage, index) => stageScores[index] !== undefined && stage.questions.every(answerExists)).length;
+  return activeQuestionnaire(track).stages.filter((stage, index) => stageScores[index] !== undefined && stage.questions.every(answerExists)).length;
 }
 
 function currentXP() {
@@ -290,8 +374,9 @@ function renderQuestion(question, index) {
 }
 
 function renderStage() {
-  const stage = questionnaires[activeTrack].stages[activeStage];
-  const stages = questionnaires[activeTrack].stages;
+  const questionnaire = activeQuestionnaire();
+  const stage = questionnaire.stages[activeStage];
+  const stages = questionnaire.stages;
   const questions = stage.questions.map((question, index) => renderQuestion(question, index)).join('');
   const checkpoint = lastScore?.nextIndex === activeStage ? renderCheckpoint(lastScore) : '';
   const emailPrompt = activeStage === stages.length - 1
@@ -302,9 +387,11 @@ function renderStage() {
   $('#previous-stage').disabled = activeStage === 0;
   $('#previous-stage').textContent = '← Previous section';
   $('#next-stage').innerHTML = activeStage === stages.length - 1 ? 'Finish my quest <span aria-hidden="true">↗</span>' : 'Next section <span aria-hidden="true">→</span>';
-  $('#quest-title').textContent = `${questionnaires[activeTrack].label} quest`;
+  $('#quest-title').textContent = `${pathDisplayLabel()} quest`;
   $('#quest-subtitle').textContent = activeTrack === 'school'
-    ? 'A few simple questions about everyday school life. “Not sure” is a perfectly good answer.'
+    ? selectedSchoolLevel === 'junior'
+      ? 'Five fun mini quests, two questions each, and a new planet badge to collect every round!'
+      : 'A few questions about everyday school life. “Not sure” is a perfectly good answer.'
     : activeTrack === 'college'
       ? 'A detailed activity snapshot for college life. Estimates are fine, and you can skip anything you don’t know.'
       : 'A workplace activity snapshot for employees. Estimates are fine, and you can skip anything you don’t know.';
@@ -312,11 +399,12 @@ function renderStage() {
 }
 
 function renderCheckpoint(score) {
+  const junior = activeTrack === 'school' && selectedSchoolLevel === 'junior';
   const badgeStatus = score.badgeEarned
     ? `<small class="badge-unlocked">✦ ${escapeHtml(score.badge)} badge unlocked!</small>`
     : '<small>Badge progress saved—keep going!</small>';
   const confetti = score.badgeEarned ? '<span class="checkpoint-confetti confetti-a" aria-hidden="true">✦</span><span class="checkpoint-confetti confetti-b" aria-hidden="true">✳</span><span class="checkpoint-confetti confetti-c" aria-hidden="true">●</span><span class="checkpoint-confetti confetti-d" aria-hidden="true">✦</span>' : '';
-  return `<div class="checkpoint-card${score.badgeEarned ? ' badge-earned' : ''}" role="status">${confetti}<span class="checkpoint-spark" aria-hidden="true">${score.badgeEarned ? '✦' : '✧'}</span><div class="checkpoint-copy"><span class="checkpoint-kicker">SECTION COMPLETE · ${escapeHtml(score.title)}</span><strong>${score.answered} / ${score.total} answers <span class="xp-reward">+${score.points} XP</span></strong>${badgeStatus}</div><div class="checkpoint-total"><strong>${score.totalXP} XP</strong><small>total so far</small></div><button class="checkpoint-dismiss" type="button" data-dismiss-score aria-label="Dismiss score summary">×</button></div>`;
+  return `<div class="checkpoint-card${score.badgeEarned ? ' badge-earned' : ''}" role="status">${confetti}<span class="checkpoint-spark" aria-hidden="true">${score.badgeEarned ? (junior ? '🌟' : '✦') : '✧'}</span><div class="checkpoint-copy"><span class="checkpoint-kicker">${junior ? 'MINI QUEST COMPLETE' : 'SECTION COMPLETE'} · ${escapeHtml(score.title)}</span><strong>${score.answered} / ${score.total} answers <span class="xp-reward">+${score.points} XP</span></strong>${badgeStatus}</div><div class="checkpoint-total"><strong>${score.totalXP} XP</strong><small>${junior ? 'star points' : 'total so far'}</small></div><button class="checkpoint-dismiss" type="button" data-dismiss-score aria-label="Dismiss score summary">×</button></div>`;
 }
 
 function showSectionCelebration(score) {
@@ -339,7 +427,8 @@ function showSectionCelebration(score) {
   const tierMarkup = tier
     ? `<div class="celebration-tier-mark"><span class="celebration-coin" aria-hidden="true">✦</span><span class="celebration-tier-label">${escapeHtml(score.tier)} carbon tier</span></div>`
     : '';
-  popup.innerHTML = `<div class="celebration-card"><div class="leaf-burst" aria-hidden="true"><span class="celebration-leaf leaf-one"></span><span class="celebration-leaf leaf-two"></span><span class="celebration-leaf leaf-three"></span><span class="celebration-leaf leaf-four"></span><span class="celebration-leaf leaf-five"></span><span class="celebration-leaf leaf-six"></span><span class="celebration-leaf leaf-seven"></span><span class="celebration-leaf leaf-eight"></span><span class="celebration-leaf leaf-nine"></span><span class="celebration-leaf leaf-ten"></span><span class="celebration-leaf tier-leaf tier-leaf-one"></span><span class="celebration-leaf tier-leaf tier-leaf-two"></span><span class="celebration-leaf tier-leaf tier-leaf-three"></span><span class="celebration-leaf tier-leaf tier-leaf-four"></span></div><span class="celebration-overline">SECTION COMPLETE</span><strong class="celebration-title">${escapeHtml(score.title)}</strong><span class="celebration-reward">+${score.points} XP <i aria-hidden="true">·</i> ${escapeHtml(reward)}</span>${tierMarkup}</div>`;
+  const junior = activeTrack === 'school' && selectedSchoolLevel === 'junior';
+  popup.innerHTML = `<div class="celebration-card"><div class="leaf-burst" aria-hidden="true"><span class="celebration-leaf leaf-one"></span><span class="celebration-leaf leaf-two"></span><span class="celebration-leaf leaf-three"></span><span class="celebration-leaf leaf-four"></span><span class="celebration-leaf leaf-five"></span><span class="celebration-leaf leaf-six"></span><span class="celebration-leaf leaf-seven"></span><span class="celebration-leaf leaf-eight"></span><span class="celebration-leaf leaf-nine"></span><span class="celebration-leaf leaf-ten"></span><span class="celebration-leaf tier-leaf tier-leaf-one"></span><span class="celebration-leaf tier-leaf tier-leaf-two"></span><span class="celebration-leaf tier-leaf tier-leaf-three"></span><span class="celebration-leaf tier-leaf tier-leaf-four"></span></div><span class="celebration-overline">${junior ? 'MINI QUEST COMPLETE · LEVEL UP!' : 'SECTION COMPLETE'}</span><strong class="celebration-title">${escapeHtml(score.title)}</strong><span class="celebration-reward">${junior ? '🌟 ' : ''}+${score.points} XP <i aria-hidden="true">·</i> ${escapeHtml(reward)}</span>${tierMarkup}</div>`;
   popup.hidden = false;
   popup.classList.remove('is-celebrating');
   void popup.offsetWidth;
@@ -361,8 +450,13 @@ function updateQuestChrome() {
   $('#overall-label').textContent = `${answered} of ${total} activity notes`;
   $('#overall-percent').textContent = `${percent}%`;
   $('#overall-progress-fill').style.width = `${percent}%`;
+  if (activeTrack === 'school') {
+    $('#score-rules-copy').textContent = selectedSchoolLevel === 'junior'
+      ? '15 star points per answer · +30 for a complete mini quest · +50 grand-finale bonus'
+      : '10 per answer · +25 for a full section · +50 finish bonus when you add an answer';
+  }
   stagePanel.querySelectorAll('.stage-count-badge').forEach((badge) => {
-    const stage = questionnaires[activeTrack].stages[activeStage];
+    const stage = activeQuestionnaire().stages[activeStage];
     badge.textContent = `${stage.questions.filter(answerExists).length} / ${stage.questions.length} answered`;
   });
   stagePanel.querySelectorAll('.answer-option').forEach((button) => {
@@ -384,6 +478,7 @@ function startQuest() {
   activeTrack = selectedTrack;
   activeStage = 0;
   answers = {};
+  if (activeTrack === 'school' && selectedSchoolLevel === 'junior') answers.school_days = '5';
   stageScores = {};
   lastScore = null;
   submissionStarted = false;
@@ -473,8 +568,9 @@ $('#previous-stage').addEventListener('click', () => {
 });
 
 $('#next-stage').addEventListener('click', () => {
-  const stage = questionnaires[activeTrack].stages[activeStage];
-  const isFinalStage = activeStage === questionnaires[activeTrack].stages.length - 1;
+  const stages = activeQuestionnaire().stages;
+  const stage = stages[activeStage];
+  const isFinalStage = activeStage === stages.length - 1;
   if (isFinalStage) {
     const emailInput = $('#participant-email');
     emailInput.value = emailInput.value.trim();
@@ -489,7 +585,8 @@ $('#next-stage').addEventListener('click', () => {
   const answered = stage.questions.filter(answerExists).length;
   const total = stage.questions.length;
   const badgeEarned = answered === total;
-  const points = answered * 10 + (badgeEarned ? 25 : 0);
+  const junior = activeTrack === 'school' && selectedSchoolLevel === 'junior';
+  const points = answered * (junior ? 15 : 10) + (badgeEarned ? (junior ? 30 : 25) : 0);
   stageScores[activeStage] = points;
   if (isFinalStage) {
     const emissions = calculateEmissions();
@@ -514,7 +611,7 @@ function answerText(question) {
 
 function renderSummary() {
   const summary = $('#answer-summary');
-  const groups = questionnaires[activeTrack].stages.map((stage) => {
+  const groups = activeQuestionnaire().stages.map((stage) => {
     const rows = stage.questions.filter(answerExists);
     if (!rows.length) return '';
     const entries = rows.map((question) => `<li><strong>${escapeHtml(question.label)}</strong> ${escapeHtml(answerText(question))}</li>`).join('');
@@ -616,7 +713,7 @@ function commuteEstimate() {
   }
   return {
     kg: annualPassengerKm * factor / occupancy,
-    reason: `${modeLabel}; ${options.weeks} active weeks per year. UK 2026 travel factors used as reference proxies.`
+    reason: `${modeLabel}; ${options.weeks} active weeks per year${activeTrack === 'school' && selectedSchoolLevel === 'junior' ? ' and 5 school days per week assumed' : ''}. UK 2026 travel factors used as reference proxies.`
   };
 }
 
@@ -648,7 +745,7 @@ function electricityEstimate() {
 
 function calculateEmissions() {
   const grid = getCountryFactor();
-  const stages = questionnaires[activeTrack].stages;
+  const stages = activeQuestionnaire().stages;
   const sections = stages.map((stage, index) => ({
     title: stage.title,
     kg: null,
@@ -709,7 +806,7 @@ function renderCarbonResults() {
 function showResults() {
   renderSummary();
   renderCarbonResults();
-  $('#result-track').textContent = `${questionnaires[activeTrack].label.toUpperCase()} PATH`;
+  $('#result-track').textContent = `${pathDisplayLabel().toUpperCase()} PATH`;
   const hasActivityAnswers = answeredQuestions().length > 0;
   $('#result-xp').textContent = hasActivityAnswers
     ? `You earned ${currentXP() + 50} XP, including your quest-complete bonus.`
@@ -719,9 +816,9 @@ function showResults() {
     college: 'Carbon Accounting Explorer',
     employee: 'Workplace Climate Explorer'
   };
-  $('#result-badge-title').textContent = titles[activeTrack];
+  $('#result-badge-title').textContent = activeTrack === 'school' && selectedSchoolLevel === 'junior' ? 'Junior Planet Explorer' : titles[activeTrack];
   $('#next-steps').innerHTML = getSuggestions().map((suggestion) => `<li>${escapeHtml(suggestion)}</li>`).join('');
-  const earned = questionnaires[activeTrack].stages.filter((stage, index) => stageScores[index] !== undefined && stage.questions.every(answerExists)).map((stage) => stage.badge);
+  const earned = activeQuestionnaire().stages.filter((stage, index) => stageScores[index] !== undefined && stage.questions.every(answerExists)).map((stage) => stage.badge);
   $('#earned-badges').innerHTML = earned.length
     ? earned.map((badge, index) => `<span class="earned-badge" style="--badge-index:${index}"><span>✳</span>${escapeHtml(badge)}</span>`).join('')
     : '<span class="earned-badge"><span>✧</span>Curiosity Starter</span>';
@@ -736,6 +833,7 @@ function showResults() {
 
 function resetQuest() {
   answers = {};
+  if (activeTrack === 'school' && selectedSchoolLevel === 'junior') answers.school_days = '5';
   stageScores = {};
   activeStage = 0;
   lastScore = null;
@@ -756,11 +854,13 @@ function buildSubmissionData() {
   return {
     questionnaire: 'GreenerQuest',
     studentPath: questionnaires[activeTrack].label,
+    pathLabel: pathDisplayLabel(),
+    schoolLevel: activeTrack === 'school' ? (selectedSchoolLevel === 'junior' ? 'Junior' : 'Senior') : undefined,
     email: participantEmail,
     submittedAt: new Date().toISOString(),
     score: {
       xp: currentXP() + (answeredQuestions().length > 0 ? 50 : 0),
-      fieldBadges: questionnaires[activeTrack].stages.filter((stage, index) => stageScores[index] !== undefined && stage.questions.every(answerExists)).map((stage) => stage.badge)
+      fieldBadges: activeQuestionnaire().stages.filter((stage, index) => stageScores[index] !== undefined && stage.questions.every(answerExists)).map((stage) => stage.badge)
     },
     country: emissions.country,
     emissions,
@@ -833,7 +933,7 @@ function buildReportBlocks(data) {
   const blocks = [
     { kind: 'title', text: 'Your climate field guide.' },
     { kind: 'body', text: 'You made time to notice your everyday patterns. That is a meaningful first step.' },
-    { kind: 'award-card', title: badgeTitles[data.studentPath] || 'Climate Explorer', subtitle: xpSummary },
+    { kind: 'award-card', title: data.schoolLevel === 'Junior' ? 'Junior Planet Explorer' : badgeTitles[data.studentPath] || 'Climate Explorer', subtitle: xpSummary },
     { kind: 'heading', text: 'Tracked annual emissions subtotal' },
     {
       kind: 'emissions-card',
@@ -966,7 +1066,7 @@ function createReportPdf(data) {
       '0.91 0.94 0.88 rg 0 742 595 100 re f',
       '0.12 0.23 0.18 rg',
       'BT /F2 18 Tf 1 0 0 1 48 795 Tm (GreenerQuest) Tj ET',
-      `BT /F1 10 Tf 1 0 0 1 48 775 Tm (${pdfEscape(`${data.studentPath.toUpperCase()} PATH - CLIMATE FIELD GUIDE`)}) Tj ET`,
+      `BT /F1 10 Tf 1 0 0 1 48 775 Tm (${pdfEscape(`${(data.pathLabel || data.studentPath).toUpperCase()} PATH - CLIMATE FIELD GUIDE`)}) Tj ET`,
       `BT /F1 8 Tf 1 0 0 1 485 775 Tm (Page ${index + 1} of ${pages.length}) Tj ET`
     ];
     rows.forEach((row) => {
