@@ -748,7 +748,7 @@ $('#retake-button').addEventListener('click', resetQuest);
 function buildSubmissionData() {
   const emissions = calculateEmissions();
   return {
-    questionnaire: 'GreenQuest',
+    questionnaire: 'GreenerQuest',
     studentPath: questionnaires[activeTrack].label,
     email: participantEmail,
     submittedAt: new Date().toISOString(),
@@ -835,7 +835,7 @@ function buildReportBlocks(data) {
       lines: [
         `${emissions.coverage.estimatedSections} of ${emissions.coverage.totalSections} sections estimated. This is a partial activity subtotal, not a full carbon footprint.`,
         `Electricity grid proxy: ${emissions.country.name} - ${emissions.country.gridGPerKwh} g CO2e/kWh (${emissions.country.datasetYear}).`,
-        `GreenQuest tier: ${emissions.tier || 'Activity Explorer'}`
+        `GreenerQuest tier: ${emissions.tier || 'Activity Explorer'}`
       ]
     },
     { kind: 'subheading', text: 'Section emissions' },
@@ -959,7 +959,7 @@ function createReportPdf(data) {
     const commands = [
       '0.91 0.94 0.88 rg 0 742 595 100 re f',
       '0.12 0.23 0.18 rg',
-      'BT /F2 18 Tf 1 0 0 1 48 795 Tm (GreenQuest) Tj ET',
+      'BT /F2 18 Tf 1 0 0 1 48 795 Tm (GreenerQuest) Tj ET',
       `BT /F1 10 Tf 1 0 0 1 48 775 Tm (${pdfEscape(`${data.studentPath.toUpperCase()} PATH - CLIMATE FIELD GUIDE`)}) Tj ET`,
       `BT /F1 8 Tf 1 0 0 1 485 775 Tm (Page ${index + 1} of ${pages.length}) Tj ET`
     ];
@@ -1044,7 +1044,7 @@ function createReportPdf(data) {
       commands.push(`${color} rg BT /${row.font} ${row.fontSize} Tf 1 0 0 1 ${x} ${row.y} Tm (${pdfEscape(text)}) Tj ET`);
     });
     commands.push('0.78 0.82 0.76 RG 48 43 m 547 43 l S');
-    commands.push('0.43 0.48 0.43 rg BT /F1 8 Tf 1 0 0 1 48 29 Tm (GreenQuest - educational activity estimate) Tj ET');
+    commands.push('0.43 0.48 0.43 rg BT /F1 8 Tf 1 0 0 1 48 29 Tm (GreenerQuest - educational activity estimate) Tj ET');
     const stream = commands.join('\n');
     const streamId = put(`<< /Length ${new TextEncoder().encode(stream).length} >>\nstream\n${stream}\nendstream`);
     const pageId = put(`<< /Type /Page /Parent ${pagesId} 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 ${regularFontId} 0 R /F2 ${boldFontId} 0 R >> >> /Contents ${streamId} 0 R >>`);
@@ -1088,7 +1088,7 @@ async function submitActivitySnapshot() {
   const status = $('#drive-save-status');
   if (window.location.protocol === 'file:') {
     status.className = 'drive-save-status is-error';
-    status.textContent = 'Automatic data collection needs the GreenQuest server. Your PDF is still available to download.';
+    status.textContent = 'Automatic data collection needs the GreenerQuest server. Your PDF is still available to download.';
     return;
   }
   status.className = 'drive-save-status is-saving';
@@ -1104,7 +1104,7 @@ async function submitActivitySnapshot() {
     status.className = 'drive-save-status is-success';
     status.textContent = result.driveArchived === false
       ? 'Your answers and emissions were added to the research sheet. The Drive backup could not be saved.'
-      : 'Your answers and calculated emissions were added to the GreenQuest research sheet.';
+      : 'Your answers and calculated emissions were added to the GreenerQuest research sheet.';
   } catch (error) {
     status.className = 'drive-save-status is-error';
     status.textContent = `Your research entry could not be saved: ${error.message || 'the service is unavailable.'} Your PDF is still available.`;

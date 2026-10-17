@@ -69,7 +69,7 @@ function sendJson(response, statusCode, data) {
 
 function sendPage(response, statusCode, title, message) {
   const escape = (value) => String(value).replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
-  const html = `<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escape(title)}</title><body style="font:16px system-ui;max-width:650px;margin:12vh auto;padding:24px;color:#23352e;background:#ffffff"><h1>${escape(title)}</h1><p>${escape(message)}</p><p><a href="/index.html">Return to GreenQuest</a></p></body></html>`;
+  const html = `<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escape(title)}</title><body style="font:16px system-ui;max-width:650px;margin:12vh auto;padding:24px;color:#23352e;background:#ffffff"><h1>${escape(title)}</h1><p>${escape(message)}</p><p><a href="/index.html">Return to GreenerQuest</a></p></body></html>`;
   response.writeHead(statusCode, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' });
   response.end(html);
 }
@@ -102,7 +102,7 @@ function isGoogleDataAdmin(request) {
 
 function requireGoogleDataAdmin(request, response) {
   if (!isGoogleDataAdmin(request)) {
-    response.writeHead(401, { 'WWW-Authenticate': 'Basic realm="GreenQuest data collection setup", charset="UTF-8"', 'Cache-Control': 'no-store' });
+    response.writeHead(401, { 'WWW-Authenticate': 'Basic realm="GreenerQuest data collection setup", charset="UTF-8"', 'Cache-Control': 'no-store' });
     response.end('Google data collection setup is restricted to the site administrator.');
     return false;
   }
@@ -187,7 +187,7 @@ function cleanSubmission(data) {
   const estimatedSections = Math.max(0, Math.min(sections.length, Math.round(Number(data.emissions?.coverage?.estimatedSections) || 0)));
   return {
     submissionId: crypto.randomUUID(),
-    questionnaire: 'GreenQuest',
+    questionnaire: 'GreenerQuest',
     studentPath: trackLabels[track],
     email,
     submittedAt: typeof data.submittedAt === 'string' ? data.submittedAt.slice(0, 40) : new Date().toISOString(),
@@ -345,7 +345,7 @@ async function ensureResearchHeaders(accessToken, sheetIds) {
     if (!hasHeader) {
       requests.push(appendCellsRequest(sheetIds[key], [tab.headers]));
     } else if (existing.length !== tab.headers.length || tab.headers.some((header, index) => existing[index] !== header)) {
-      throw Object.assign(new Error(`The ${tab.title} tab already has different column headings. Rename that tab or clear its first row so GreenQuest can create its research columns.`), { statusCode: 503 });
+      throw Object.assign(new Error(`The ${tab.title} tab already has different column headings. Rename that tab or clear its first row so GreenerQuest can create its research columns.`), { statusCode: 503 });
     }
   }
   if (requests.length) {
@@ -469,7 +469,7 @@ async function handleRequest(request, response) {
     const state = url.searchParams.get('state');
     const createdAt = state && oauthStates.get(state);
     if (!createdAt || Date.now() - createdAt > 10 * 60 * 1000) {
-      sendPage(response, 400, 'Could not connect Google data collection', 'The sign-in request expired. Return to GreenQuest and ask the site administrator to try again.');
+      sendPage(response, 400, 'Could not connect Google data collection', 'The sign-in request expired. Return to GreenerQuest and ask the site administrator to try again.');
       return;
     }
     oauthStates.delete(state);
@@ -504,7 +504,7 @@ async function handleRequest(request, response) {
       return;
     }
     await saveRefreshToken(refreshToken);
-    sendPage(response, 200, 'Google data collection connected', 'GreenQuest will add completed questionnaire answers and calculated emissions to the configured research sheet and archive each submission in the Drive folder.');
+    sendPage(response, 200, 'Google data collection connected', 'GreenerQuest will add completed questionnaire answers and calculated emissions to the configured research sheet and archive each submission in the Drive folder.');
     return;
   }
 
@@ -514,7 +514,7 @@ async function handleRequest(request, response) {
       return;
     }
     if (request.headers.origin !== APP_ORIGIN) {
-      sendJson(response, 403, { error: 'This submission must come from the GreenQuest website.' });
+      sendJson(response, 403, { error: 'This submission must come from the GreenerQuest website.' });
       return;
     }
     try {
@@ -552,6 +552,6 @@ const server = http.createServer((request, response) => {
 });
 
 server.listen(PORT, '0.0.0.0', () => {
-  console.log(`GreenQuest is running at ${APP_ORIGIN}`);
+  console.log(`GreenerQuest is running at ${APP_ORIGIN}`);
   if (!hasGoogleConfig()) console.log('Google data collection is not configured; add the private OAuth settings in .env.');
 });

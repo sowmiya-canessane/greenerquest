@@ -1,6 +1,6 @@
-# GreenQuest
+# GreenerQuest
 
-GreenQuest is a large-text, gamified questionnaire for school students, college students, and employees. The home page links to a separate questionnaire page for each audience. Each section advances with **Next** and awards participation XP; the final page shows the completed score, badges, and an activity-data summary.
+GreenerQuest is a large-text, gamified questionnaire for school students, college students, and employees. The home page links to a separate questionnaire page for each audience. Each section advances with **Next** and awards participation XP; the final page shows the completed score, badges, and an activity-data summary.
 
 ## Run locally
 
@@ -10,7 +10,7 @@ Use Node.js 18 or newer. No package install is required.
 2. Start the site with `node server.js`.
 3. Open `http://localhost:3000`.
 
-Participants enter a valid email address in the final questionnaire section. When they finish, the site automatically appends their answers and calculated emissions to the configured Google Sheet and archives a JSON snapshot in the configured Google Drive folder. Google data collection is handled by the site; there is no participant save button. Participants can download a PDF report after entering a valid email. The PDF includes the overall tracked subtotal, section-by-section amounts or “Not estimated” status, field badges, GreenQuest tier, and calculation notes.
+Participants enter a valid email address in the final questionnaire section. When they finish, the site automatically appends their answers and calculated emissions to the configured Google Sheet and archives a JSON snapshot in the configured Google Drive folder. Google data collection is handled by the site; there is no participant save button. Participants can download a PDF report after entering a valid email. The PDF includes the overall tracked subtotal, section-by-section amounts or “Not estimated” status, field badges, GreenerQuest tier, and calculation notes.
 
 ## Emissions report
 
@@ -31,10 +31,10 @@ The destination spreadsheet is configured as `1YUhKhtfuvdEaPBmaKNyVLrOqLEluXWaVE
 5. Start the server, then visit `/auth/google` on the same origin. Sign in with the Google account that can edit the spreadsheet and add files to the folder, then grant the requested Sheets and Drive access. The server stores a refresh token in `.carbon-quest-drive-token.json`. If a Drive-only connection already exists, reconnect after this update so Google grants the new Sheets scope.
 6. Keep `.env` and `.carbon-quest-drive-token.json` private. For a public deployment, use HTTPS, persistent private storage for the token, and configure the exact deployed `APP_ORIGIN`, OAuth redirect URI, spreadsheet ID, and Drive folder ID. Do not use the example admin password.
 
-On the first submission, GreenQuest creates three research tabs if they do not exist: **GreenQuest Submissions** (one summary row per participant), **GreenQuest Responses** (one row per answered question), and **GreenQuest Emissions** (one row per activity section, including unestimated sections and reasons). It adds column headers to blank tabs. Existing tabs with those names must use GreenQuest's expected headers; other spreadsheet tabs are left untouched. The same submission is also archived as a JSON file in the configured Drive folder.
+On the first submission, GreenerQuest creates three research tabs if needed, keeping their established **GreenQuest** names so existing research records remain together: **GreenQuest Submissions** (one summary row per participant), **GreenQuest Responses** (one row per answered question), and **GreenQuest Emissions** (one row per activity section, including unestimated sections and reasons). It adds column headers to blank tabs. Existing tabs with those names must use GreenerQuest's expected headers; other spreadsheet tabs are left untouched. The same submission is also archived as a JSON file in the configured Drive folder.
 
 The app requests the Google Sheets scope to append research records. It requests Google Drive access because the archive folder is a pre-existing folder supplied by ID. Google's narrower `drive.file` scope is intended for files opened or shared with an app, including through Google Picker; this app does not use Picker. The server only creates submission files in the configured folder, but the authorized OAuth token has broader Drive scope. Review Google's current [Drive API scope guidance](https://developers.google.com/workspace/drive/api/guides/api-specific-auth) and OAuth verification requirements before publishing broadly.
 
 ## Stored submission fields
 
-The spreadsheet and Drive JSON snapshot include the participant email, audience path, timestamp, selected country, XP, earned field badges, answers, the tracked emissions subtotal, and a summary for every questionnaire section. The email is collected in the final questionnaire section for the PDF download and is stored with the activity entry for program data collection. XP is a participation score; the GreenQuest tier is a gamified band applied to the partial subtotal.
+The spreadsheet and Drive JSON snapshot include the participant email, audience path, timestamp, selected country, XP, earned field badges, answers, the tracked emissions subtotal, and a summary for every questionnaire section. The email is collected in the final questionnaire section for the PDF download and is stored with the activity entry for program data collection. XP is a participation score; the GreenerQuest tier is a gamified band applied to the partial subtotal.
