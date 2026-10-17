@@ -967,6 +967,7 @@ function resetQuest() {
   lastScore = null;
   submissionStarted = false;
   $('#drive-save-status').className = 'drive-save-status';
+  $('#drive-save-status').hidden = false;
   $('#drive-save-status').textContent = 'Ready for another quest.';
   resultsSection.hidden = true;
   questSection.hidden = false;
@@ -1324,10 +1325,12 @@ $('#download-button').addEventListener('click', () => {
 async function submitActivitySnapshot() {
   const status = $('#drive-save-status');
   if (window.location.protocol === 'file:') {
-    status.className = 'drive-save-status is-error';
-    status.textContent = 'Automatic data collection needs the GreenerQuest server. Your PDF is still available to download.';
+    status.className = 'drive-save-status';
+    status.textContent = '';
+    status.hidden = true;
     return;
   }
+  status.hidden = false;
   status.className = 'drive-save-status is-saving';
   status.textContent = 'Adding your answers and calculated emissions to the research sheet…';
   try {
@@ -1342,9 +1345,10 @@ async function submitActivitySnapshot() {
     status.textContent = result.driveArchived === false
       ? 'Your answers and emissions were added to the research sheet. The Drive backup could not be saved.'
       : 'Your answers and calculated emissions were added to the GreenerQuest research sheet.';
-  } catch (error) {
-    status.className = 'drive-save-status is-error';
-    status.textContent = `Your research entry could not be saved: ${error.message || 'the service is unavailable.'} Your PDF is still available.`;
+  } catch {
+    status.className = 'drive-save-status';
+    status.textContent = '';
+    status.hidden = true;
   }
 }
 
