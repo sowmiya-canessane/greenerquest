@@ -1,6 +1,6 @@
 # GreenerQuest
 
-GreenerQuest is a large-text, gamified questionnaire for school students, college students, and employees. The home page links to a separate questionnaire page for each audience. Each section advances with **Next** and awards participation XP; the final page shows the completed score, badges, and an activity-data summary.
+GreenerQuest is a large-text, gamified carbon activity questionnaire for students, employees, and individuals. The home page offers three audience cards: **Educational Institution**, **Corporates**, and **Individuals**. Educational Institution opens a page with Junior School, Senior School, and College Students quiz cards; Corporates opens an Employee card; Individuals opens the personal quiz directly. Each questionnaire section advances with **Next** and awards participation XP. At least 85% of questions on each path are required. The final page shows the score, badges, and an activity-data summary.
 
 ## Run locally
 

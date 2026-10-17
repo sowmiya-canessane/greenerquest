@@ -34,6 +34,8 @@ const RESEARCH_TABS = {
 const allowedPaths = new Map([
   ['/', 'index.html'],
   ['/index.html', 'index.html'],
+  ['/educational-institution.html', 'educational-institution.html'],
+  ['/corporates.html', 'corporates.html'],
   ['/school.html', 'school.html'],
   ['/junior.html', 'junior.html'],
   ['/college.html', 'college.html'],
