@@ -7,7 +7,7 @@ const questionnaires = {
         description: 'Let’s start with the trip you make most school days. A rough estimate is great.',
         questions: [
           { id: 'school_mode', type: 'single', label: 'How do you usually travel to school?', options: ['School bus', 'Public transport', 'Family car', 'Two-wheeler', 'Bicycle', 'Walk', 'Other'] },
-          { id: 'school_distance', type: 'number', label: 'About how far is home from school, one way?', help: 'A map estimate is fine.', unit: 'km', step: '0.1', max: '500' },
+          { id: 'school_distance', type: 'number', label: 'About how far is home from school, one way?', help: 'A map estimate is fine.', unit: 'km', step: '0.1', max: '25' },
           { id: 'school_days', type: 'number', label: 'How many days a week do you travel to school?', unit: 'days / week', step: '1', max: '7' },
           { id: 'school_carpool', type: 'single', label: 'If you travel by car, do you share the ride?', options: ['Usually', 'Sometimes', 'Not usually', 'I do not travel by car', 'Not sure'] }
         ]
