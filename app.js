@@ -853,7 +853,7 @@ function buildSubmissionData() {
   const emissions = calculateEmissions();
   return {
     questionnaire: 'GreenerQuest',
-    studentPath: questionnaires[activeTrack].label,
+    studentPath: activeTrack === 'school' ? pathDisplayLabel() : questionnaires[activeTrack].label,
     pathLabel: pathDisplayLabel(),
     schoolLevel: activeTrack === 'school' ? (selectedSchoolLevel === 'junior' ? 'Junior' : 'Senior') : undefined,
     email: participantEmail,
@@ -910,6 +910,8 @@ function buildReportBlocks(data) {
   const emissions = data.emissions;
   const badgeTitles = {
     School: 'Everyday Climate Explorer',
+    'Junior School': 'Junior Planet Explorer',
+    'Senior School': 'Everyday Climate Explorer',
     College: 'Carbon Accounting Explorer',
     Employee: 'Workplace Climate Explorer'
   };

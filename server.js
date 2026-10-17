@@ -126,7 +126,13 @@ async function readJsonBody(request, maxBytes = 64 * 1024) {
 
 function cleanSubmission(data) {
   const track = String(data?.studentPath || '').toLowerCase();
-  const trackLabels = { school: 'School', college: 'College', employee: 'Employee' };
+  const trackLabels = {
+    school: 'School',
+    'junior school': 'Junior School',
+    'senior school': 'Senior School',
+    college: 'College',
+    employee: 'Employee'
+  };
   if (!trackLabels[track]) throw Object.assign(new Error('Choose a valid questionnaire path.'), { statusCode: 400 });
   const email = String(data?.email || '').trim();
   if (email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
